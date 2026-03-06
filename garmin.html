@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>⚡ GPS ↔ UTM Pro - CEET</title>
+  <link rel="icon" href="https://services.ceet.tg/assets/img/ceet_logo1.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet & Proj4 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
+
+  <style>
+    :root {
+      --primary: #00f2ff;
+      --secondary: #7000ff;
+      --bg: #050810;
+      --card-bg: rgba(15, 20, 35, 0.8);
+      --glass-border: rgba(0, 242, 255, 0.2);
+      --text: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Canvas Fond Interactif */
+    #bgCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+    }
+
+    header {
+      width: 100%;
+      padding: 20px;
+      background: rgba(5, 8, 16, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 95%;
+      margin: 40px 0;
+      perspective: 1000px;
+    }
+
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 242, 255, 0.1);
+      animation: slideUp 0.8s ease-out;
+    }
+
+    h1, h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      margin-top: 5px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+      background: rgba(0, 242, 255, 0.05);
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(112, 0, 255, 0.4);
+      margin-bottom: 10px;
+    }
+
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 242, 255, 0.5);
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: var(--bg);
+    }
+
+    #result, #utmResult {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 242, 255, 0.05);
+      border-left: 3px solid var(--primary);
+      border-radius: 4px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      display: none;
+    }
+
+    #map {
+      width: 100%;
+      height: 350px;
+      margin-top: 25px;
+      border-radius: 15px;
+      border: 1px solid var(--glass-border);
+      filter: hue-rotate(180deg) invert(100%) contrast(90%); /* Trick pour mode sombre simple */
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 40px 20px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .logo-spin {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      padding: 5px;
+      animation: spin 8s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .grid-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    @media (max-width: 600px) {
+      .grid-inputs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="bgCanvas"></canvas>
+
+  <header>
+    <div class="logo-text">⚡ GPS ↔ UTM PRO</div>
+    <div id="status" style="font-size: 0.8rem; color: var(--primary);">SYSTEM READY</div>
+  </header>
+
+  <div class="container">
+    <div class="glass-card">
+      <h1>🌍 Géolocalisation Temps Réel</h1>
+      <button class="btn-main" onclick="getLocation()">Scanner ma Position</button>
+      <div id="result"></div>
+      
+      <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 30px 0;">
+
+      <h2>🧭 Conversion UTM (Zone 31N)</h2>
+      <div class="grid-inputs">
+        <div class="input-group">
+          <label>Easting (X)</label>
+          <input type="number" id="easting" placeholder="Ex: 293281">
+        </div>
+        <div class="input-group">
+          <label>Northing (Y)</label>
+          <input type="number" id="northing" placeholder="Ex: 686252">
+        </div>
+      </div>
+      <button class="btn-main" onclick="convertUTM()">Convertir en Lat/Lon</button>
+      
+      <div id="utmResult"></div>
+
+      <div id="map"></div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+        <a href="index.html" class="btn-secondary">🏠 Menu</a>
+        <a href="converter.html" class="btn-secondary">⚙️ Avancé</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <img src="af.jpg" class="logo-spin" alt="Logo">
+    <p style="font-size: 0.8rem; opacity: 0.7; letter-spacing: 1px;">
+      &copy; 2025 FIOAKEY ⚡ AmiBa Groupe <br>
+    
+    </p>
+  </footer>
+
+  <script>
+    const utm31n = "+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs";
+    let map, marker;
+
+    // Initialisation Carte (Mode Sombre via filter CSS)
+    function initMap(lat = 6.137, lon = 1.215) {
+      if (!map) {
+        map = L.map("map", { zoomControl: false }).setView([lat, lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+        marker = L.marker([lat, lon]).addTo(map);
+      } else {
+        map.setView([lat, lon], 14);
+        marker.setLatLng([lat, lon]);
+      }
+    }
+    initMap();
+
+    // Géolocalisation
+    function getLocation() {
+      const btn = event.target;
+      btn.textContent = "Recherche en cours...";
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            btn.textContent = "Scanner ma Position";
+            showPosition(pos);
+          }, 
+          showError, 
+          { enableHighAccuracy: true }
+        );
+      }
+    }
+
+    function showPosition(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const [easting, northing] = proj4("WGS84", utm31n, [lon, lat]);
+      
+      const resDiv = document.getElementById("result");
+      resDiv.style.display = "block";
+      resDiv.innerHTML = `
+        <strong>LAT:</strong> ${lat.toFixed(6)} | <strong>LON:</strong> ${lon.toFixed(6)}<br>
+        <strong>EAST:</strong> ${easting.toFixed(2)} m | <strong>NORTH:</strong> ${northing.toFixed(2)} m<br>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="color:var(--primary); text-decoration:none;">↗ Ouvrir dans Google Maps</a>
+      `;
+      initMap(lat, lon);
+    }
+
+    // Conversion UTM
+    function convertUTM() {
+      const easting = parseFloat(document.getElementById("easting").value);
+      const northing = parseFloat(document.getElementById("northing").value);
+      
+      if (isNaN(easting) || isNaN(northing)) return;
+
+      const [lon, lat] = proj4(utm31n, "WGS84", [easting, northing]);
+      const resDiv = document.getElementById("utmResult");
+      resDiv.style.display = "block";
+      resDiv.innerHTML = `
+        <strong>Latitude :</strong> ${lat.toFixed(6)}<br>
+        <strong>Longitude :</strong> ${lon.toFixed(6)}<br>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="color:var(--primary); text-decoration:none;">↗ Itinéraire Google Maps</a>
+      `;
+      initMap(lat, lon);
+    }
+
+    function showError(error) {
+      alert("Erreur GPS : " + error.message);
+    }
+
+    // --- ANIMATION FOND (CONSTELLATION) ---
+    const canvas = document.getElementById("bgCanvas");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    function initCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      particles = [];
+      for (let i = 0; i < 80; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          size: Math.random() * 2
+        });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(0, 242, 255, 0.5)";
+      
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 100) {
+            ctx.strokeStyle = `rgba(0, 242, 255, ${1 - dist / 100})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      });
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener("resize", initCanvas);
+    initCanvas();
+    animate();
+  </script>
+</body>
+</html>
+```
