@@ -264,9 +264,141 @@
     @media (max-width: 600px) {
       .converter-grid { grid-template-columns: 1fr; }
     }
+  //publicitaire
+    .promo-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    transition: opacity 0.5s ease;
+}
+
+.promo-box {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    overflow: hidden;
+}
+
+.timer-bar {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 5px;
+    background: #eee;
+}
+
+#progress {
+    height: 100%;
+    background: #ff4757;
+    width: 100%;
+}
+.promo-img {
+    width: 100%;
+    height: 200px; /* Hauteur fixe pour une uniformité */
+    object-fit: cover; /* Recadre l'image sans la déformer */
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.promo-box h3 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.promo-box button {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+.promo-box button:hover {
+    background: #ff6b81;
+}
+.contact-info {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-size: 0.9em;
+    text-align: left;
+}
+
+.contact-info p {
+    margin: 5px 0;
+    color: #444;
+}
+
+.contact-info a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.copyright {
+    font-size: 0.75em;
+    color: #888;
+    margin-top: 10px;
+}
+
+/* Ajustement du bouton pour qu'il soit bien visible */
+.promo-box button {
+    width: 100%;
+    margin-top: 15px;
+    background: #2c3e50;
+}
+.promo-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); display: flex;
+    justify-content: center; align-items: center; z-index: 9999;
+}
+.promo-box {
+    background: white; padding: 20px; border-radius: 15px;
+    width: 90%; max-width: 400px; text-align: center; position: relative;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+.promo-img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
+.timer-bar { width: 100%; height: 4px; background: #eee; margin-bottom: 15px; }
+#progress { height: 100%; background: #2c3e50; width: 100%; }
+.contact-info { background: #f4f4f4; padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 0.9em; text-align: left; }
+.copyright { font-size: 0.7em; color: #999; margin-bottom: 10px; }
+button { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+
   </style>
 </head>
 <body>
+  <div id="promo-overlay" class="promo-overlay">
+    <div class="promo-box">
+        <div class="timer-bar"><div id="progress"></div></div>
+        
+        <img src="https://emileag.art.blog/wp-content/uploads/2024/09/img_20231220_2038471746333048569282032.jpg?w=1200&h=" alt="AmiBa Groupe" class="promo-img">
+        
+        <h3>À propos de l'application</h3>
+        <p>Cette application a été créée par <strong>AGBABLI</strong> (Électrotechnicien & Informaticien) en collaboration avec son équipe <strong>AmiBa Groupe</strong>.</p>
+        
+        <div class="contact-info">
+            <p><strong>Email :</strong> emileagbabli7@gmail.com</p>
+            <p><strong>Tel :</strong> +228 93896972</p>
+            <a href="https://emileag228.github.io/AmiBa.Web/" target="_blank">🌐 Visiter notre site web</a>
+        </div>
+        
+        <p class="copyright">© Tous droits réservés à AmiBa Groupe</p>
+        
+        <button onclick="closePromo()">Fermer</button>
+    </div>
+</div>
 
   <header>
     <div class="header-brand">
@@ -421,6 +553,31 @@
         setTimeout(() => btn.innerText = "Copier", 2000);
       });
     }
+    //publiciataire
+// Temps en millisecondes (15 secondes ici)
+const duration = 15000;
+const progressBar = document.getElementById('progress');
+const promoOverlay = document.getElementById('promo-overlay');
+
+function closePromo() {
+    promoOverlay.style.display = 'none';
+}
+
+// Animation de la barre de progression
+let startTime = null;
+function animate(currentTime) {
+    if (!startTime) startTime = currentTime;
+    let progress = (currentTime - startTime) / duration;
+    progressBar.style.width = (100 - (progress * 100)) + '%';
+    
+    if (progress < 1) {
+        requestAnimationFrame(animate);
+    } else {
+        closePromo();
+    }
+}
+
+requestAnimationFrame(animate);
   </script>
 </body>
 </html>
