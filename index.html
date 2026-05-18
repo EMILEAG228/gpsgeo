@@ -4,41 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="https://plateaux-actu.tg/wp-content/uploads/2024/12/IMG-20241212-WA0141.jpg">
-    <title>GPS Pilotage | Interface Système</title>
-    
+    <title>GPS Pilotage | Interface Système VO3</title>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&family=Chakra+Petch:wght@300;400;700&display=swap');
 
         :root {
             --primary: #00fff0;
+            --primary-glow: #00fff066;
             --secondary: #ff0057;
-            --bg-dark: #050505;
-            --glass: rgba(255, 255, 255, 0.03);
+            --secondary-glow: #ff005766;
+            --accent: #f0ff00;
+            --accent-glow: #f0ff0066;
+            --bg-dark: #03040a;
+            --bg-deep: #010208;
+            --glass: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(0, 255, 240, 0.15);
             --border: rgba(0, 255, 240, 0.3);
+            --hud: #00ffaa;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
 
-        body {
-            font-family: 'Rajdhani', sans-serif;
+        html, body {
+            font-family: 'Chakra Petch', 'Rajdhani', sans-serif;
             height: 100vh;
             overflow: hidden;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-deep);
             color: var(--primary);
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* Overlay de grain cinématographique */
+        /* Fond animé VO3 - Gradient vivant */
+        body::after {
+            content: "";
+            position: fixed;
+            width: 200%; height: 200%;
+            top: -50%; left: -50%;
+            background:
+                radial-gradient(circle at 20% 30%, var(--primary-glow) 0%, transparent 25%),
+                radial-gradient(circle at 80% 70%, var(--secondary-glow) 0%, transparent 25%),
+                radial-gradient(circle at 50% 50%, var(--accent-glow) 0%, transparent 30%),
+                var(--bg-deep);
+            z-index: -2;
+            animation: bgShift 20s ease-in-out infinite alternate;
+            filter: blur(80px);
+            opacity: 0.4;
+        }
+
+        /* Grain + Scanlines VO3 */
         body::before {
             content: "";
-            position: absolute;
+            position: fixed;
             width: 100%; height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-            opacity: 0.1;
+            background:
+                repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px),
+                url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            opacity: 0.12;
             z-index: 1;
             pointer-events: none;
+            animation: flicker 0.15s infinite alternate;
         }
 
         canvas#network {
@@ -46,292 +73,572 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 0;
+            filter: drop-shadow(0 0 8px var(--primary-glow));
         }
 
-        /* Conteneur Principal en Glassmorphism */
-        .glass-card {
-            position: relative;
-            z-index: 2;
-            padding: 50px 80px;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 255, 240, 0.05);
-            animation: cardAppear 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        canvas#particles {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.6;
         }
 
-        /* Animation Logo avec Radar */
-        .logo-wrapper {
-            position: relative;
-            width: 180px;
-            height: 180px;
-            margin: 0 auto 30px;
+        /* HUD Coins animés */
+       .hud-frame {
+            position: fixed;
+            inset: 20px;
+            z-index: 3;
+            pointer-events: none;
+            border: 1px solid rgba(0,255,240,0.1);
         }
-
-        .logo-wrapper::after {
+       .hud-frame::before,.hud-frame::after {
             content: "";
             position: absolute;
-            top: -10px; left: -10px; right: -10px; bottom: -10px;
+            width: 60px; height: 60px;
+            border: 2px solid var(--hud);
+            animation: hudPulse 3s ease-in-out infinite;
+        }
+       .hud-frame::before {
+            top: -2px; left: -2px;
+            border-right: 0; border-bottom: 0;
+        }
+       .hud-frame::after {
+            bottom: -2px; right: -2px;
+            border-left: 0; border-top: 0;
+        }
+
+        /* Texte défilant HUD */
+       .hud-text {
+            position: fixed;
+            top: 25px;
+            left: 90px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--hud);
+            opacity: 0.7;
+            z-index: 3;
+            animation: textScroll 15s linear infinite;
+        }
+       .hud-text-right {
+            position: fixed;
+            bottom: 25px;
+            right: 90px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--hud);
+            opacity: 0.7;
+            z-index: 3;
+        }
+
+        /* Conteneur Principal VO3 */
+       .glass-card {
+            position: relative;
+            z-index: 2;
+            padding: 60px 90px;
+            background: linear-gradient(135deg, rgba(0,255,240,0.03) 0%, rgba(255,0,87,0.02) 100%), var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            text-align: center;
+            box-shadow:
+                0 0 60px rgba(0, 0, 0, 0.6),
+                inset 0 0 30px rgba(0, 255, 240, 0.03),
+                0 0 120px var(--primary-glow);
+            animation: cardAppear 1.5s cubic-bezier(0.16, 1, 0.3, 1), cardFloat 6s ease-in-out infinite 1.5s;
+            transform-style: preserve-3d;
+        }
+
+        /* Logo avec Triple Radar + Pulse */
+       .logo-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 35px;
+            animation: logoFloat 4s ease-in-out infinite;
+        }
+
+       .logo-wrapper::before {
+            content: "";
+            position: absolute;
+            top: -20px; left: -20px; right: -20px; bottom: -20px;
             border: 2px solid var(--primary);
             border-radius: 50%;
             border-left-color: transparent;
             border-bottom-color: transparent;
             animation: rotate 3s linear infinite;
+            filter: drop-shadow(0 0 10px var(--primary));
         }
 
-        .logo {
+       .logo-wrapper::after {
+            content: "";
+            position: absolute;
+            top: -35px; left: -35px; right: -35px; bottom: -35px;
+            border: 1px solid var(--secondary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            border-right-color: transparent;
+            animation: rotate 5s linear infinite reverse;
+            filter: drop-shadow(0 0 10px var(--secondary));
+        }
+
+       .logo-pulse {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 100%; height: 100%;
+            transform: translate(-50%, -50%);
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+       .logo {
             width: 100%;
             height: 100%;
             border-radius: 50%;
             object-fit: cover;
             border: 4px solid var(--bg-dark);
-            box-shadow: 0 0 30px var(--primary);
+            box-shadow:
+                0 0 40px var(--primary),
+                inset 0 0 20px rgba(0,255,240,0.2);
+            animation: logoGlow 3s ease-in-out infinite alternate;
         }
 
+        /* Titre avec Glitch VO3 */
         h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
+            font-size: 3.8rem;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 8px;
-            margin-bottom: 40px;
-            background: linear-gradient(to bottom, #fff, var(--primary));
+            letter-spacing: 10px;
+            margin-bottom: 45px;
+            position: relative;
+            background: linear-gradient(90deg, #fff 0%, var(--primary) 50%, #fff 100%);
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(0, 255, 240, 0.5));
+            filter: drop-shadow(0 0 20px rgba(0, 255, 240, 0.6));
+            animation: shimmer 3s linear infinite, textGlitch 8s infinite;
         }
 
-        /* Bouton Style Cyber-Tech */
-        .btn-container {
+        h1::before, h1::after {
+            content: "FIOAKEY & AGBABLI GPS";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent 0%, var(--secondary) 50%, transparent 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0.8;
+        }
+
+        h1::before {
+            animation: glitchTop 2.5s infinite linear alternate-reverse;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+        }
+
+        h1::after {
+            animation: glitchBottom 3s infinite linear alternate-reverse;
+            clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+        }
+
+        /* Bouton VO3 Ultra */
+       .btn-container {
             position: relative;
             display: inline-block;
         }
 
-        .btn {
+       .btn-container::before {
+            content: "";
+            position: absolute;
+            inset: -20px;
+            background: conic-gradient(from 0deg, transparent, var(--primary), transparent, var(--secondary), transparent);
+            border-radius: 10px;
+            animation: rotateBorder 4s linear infinite;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+       .btn-container:hover::before {
+            opacity: 0.5;
+        }
+
+       .btn {
             position: relative;
-            padding: 20px 60px;
+            padding: 22px 70px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             text-transform: uppercase;
             color: #fff;
             background: transparent;
-            border: 1px solid var(--primary);
+            border: 2px solid var(--primary);
             overflow: hidden;
             transition: 0.4s;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            z-index: 1;
         }
 
-        .btn:hover {
+       .btn:hover {
             color: var(--bg-dark);
-            box-shadow: 0 0 40px var(--primary);
+            box-shadow:
+                0 0 50px var(--primary),
+                inset 0 0 20px rgba(255,255,255,0.2);
+            transform: translateY(-2px);
         }
 
-        .btn::before {
+       .btn::before {
             content: "";
             position: absolute;
             top: 0; left: -100%;
             width: 100%; height: 100%;
-            background: var(--primary);
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
             z-index: -1;
-            transition: 0.4s cubic-bezier(0.7, 0, 0.3, 1);
+            transition: 0.5s cubic-bezier(0.7, 0, 0.3, 1);
         }
 
-        .btn:hover::before {
-            left: 0;
-        }
-
-        /* Éléments de décoration UI */
-        .ui-corner {
+       .btn::after {
+            content: "";
             position: absolute;
-            width: 20px; height: 20px;
-            border: 2px solid var(--primary);
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
         }
-        .top-left { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
-        .bottom-right { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
 
-        /* Animations */
+       .btn:hover::before { left: 100%; }
+       .btn:hover::after { width: 300px; height: 300px; }
+
+        /* UI Corners animés */
+       .ui-corner {
+            position: absolute;
+            width: 25px; height: 25px;
+            border: 2px solid var(--primary);
+            animation: cornerGlow 2s ease-in-out infinite alternate;
+        }
+       .top-left { top: -8px; left: -8px; border-right: 0; border-bottom: 0; }
+       .bottom-right { bottom: -8px; right: -8px; border-left: 0; border-top: 0; }
+       .top-right { top: -8px; right: -8px; border-left: 0; border-bottom: 0; }
+       .bottom-left { bottom: -8px; left: -8px; border-right: 0; border-top: 0; }
+
+        /* Scanner Line VO3 */
+       .scanner-line {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary);
+            z-index: 10;
+            pointer-events: none;
+            animation: scan 3s linear infinite;
+        }
+
+       .scanner-line::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, var(--primary-glow), transparent);
+        }
+
+        /* Promo VO3 */
+       .promo-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px) saturate(150%);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            animation: overlayIn 0.5s ease;
+        }
+
+       .promo-box {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,255,0.95) 100%);
+            padding: 35px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow:
+                0 20px 60px rgba(0,0,0,0.5),
+                0 0 80px var(--primary-glow),
+                inset 0 0 40px rgba(0,255,240,0.05);
+            max-width: 420px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,255,240,0.3);
+            animation: promoPulse 2s ease-in-out infinite alternate;
+        }
+
+       .timer-bar {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 6px;
+            background: #ddd;
+            overflow: hidden;
+        }
+
+        #progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            background-size: 200% 100%;
+            width: 100%;
+            animation: progressShine 1s linear infinite;
+        }
+
+       .promo-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: imgKenBurns 10s ease-in-out infinite alternate;
+        }
+
+       .promo-box h3 {
+            margin: 12px 0;
+            color: #111;
+            font-family: 'Orbitron', sans-serif;
+            animation: textWave 3s ease-in-out infinite;
+        }
+
+       .promo-box p {
+            color: #333;
+            line-height: 1.6;
+        }
+
+       .contact-info {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 14px;
+            border-radius: 10px;
+            margin: 18px 0;
+            font-size: 0.9em;
+            text-align: left;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+       .contact-info p {
+            margin: 6px 0;
+            color: #444;
+        }
+
+       .contact-info a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+       .contact-info a:hover {
+            color: var(--secondary);
+            text-shadow: 0 0 10px var(--secondary-glow);
+        }
+
+       .copyright {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 12px;
+        }
+
+       .promo-box button {
+            width: 100%;
+            margin-top: 18px;
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+       .promo-box button:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, #c40044 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--secondary-glow);
+        }
+
+        /* ANIMATIONS VO3 */
+        @keyframes bgShift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(10%, 10%) rotate(5deg); }
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 0.12; }
+            50% { opacity: 0.08; }
+        }
+
+        @keyframes hudPulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        @keyframes textScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
         @keyframes rotate {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        @keyframes cardAppear {
-            from { opacity: 0; transform: translateY(50px) scale(0.9); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes rotateBorder {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        /* Scanner Line */
-        .scanner-line {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 2px;
-            background: rgba(0, 255, 240, 0.1);
-            box-shadow: 0 0 10px var(--primary);
-            z-index: 10;
-            pointer-events: none;
-            animation: scan 4s linear infinite;
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(80px) scale(0.8) rotateX(20deg); }
+            to { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+
+        @keyframes pulseRing {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        @keyframes logoGlow {
+            0% { box-shadow: 0 0 40px var(--primary), inset 0 0 20px rgba(0,255,240,0.2); }
+            100% { box-shadow: 0 0 60px var(--primary), 0 0 80px var(--primary-glow), inset 0 0 30px rgba(0,255,240,0.4); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes textGlitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        @keyframes glitchTop {
+            0% { transform: translate(0); }
+            20% { transform: translate(-3px, -3px); }
+            40% { transform: translate(-3px, 3px); }
+            60% { transform: translate(3px, -3px); }
+            80% { transform: translate(3px, 3px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes glitchBottom {
+            0% { transform: translate(0); }
+            20% { transform: translate(3px, 3px); }
+            40% { transform: translate(3px, -3px); }
+            60% { transform: translate(-3px, 3px); }
+            80% { transform: translate(-3px, -3px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes cornerGlow {
+            0% { box-shadow: 0 0 5px var(--primary); }
+            100% { box-shadow: 0 0 20px var(--primary), 0 0 30px var(--primary-glow); }
         }
 
         @keyframes scan {
-            0% { top: -5%; }
-            100% { top: 105%; }
+            0% { top: -5%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 105%; opacity: 0; }
+        }
+
+        @keyframes overlayIn {
+            from { opacity: 0; transform: scale(1.1); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes promoPulse {
+            0% { box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px var(--primary-glow); }
+            100% { box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 120px var(--primary-glow); }
+        }
+
+        @keyframes progressShine {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        @keyframes imgKenBurns {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.1) translate(-5px, -5px); }
+        }
+
+        @keyframes textWave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
         }
 
         @media(max-width: 768px) {
-            .glass-card { padding: 30px; width: 90%; }
-            h1 { font-size: 1.8rem; letter-spacing: 3px; }
-            .logo-wrapper { width: 120px; height: 120px; }
+           .glass-card { padding: 40px 30px; width: 92%; }
+            h1 { font-size: 2rem; letter-spacing: 4px; }
+           .logo-wrapper { width: 140px; height: 140px; }
+           .btn { padding: 18px 40px; font-size: 1rem; }
+           .hud-frame { inset: 10px; }
+           .hud-text,.hud-text-right { font-size: 0.6rem; }
         }
-    //publicitaire
-    .promo-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    backdrop-filter: blur(5px);
-    transition: opacity 0.5s ease;
-}
-
-.promo-box {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    max-width: 400px;
-    width: 90%;
-    position: relative;
-    overflow: hidden;
-}
-
-.timer-bar {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 5px;
-    background: #eee;
-}
-
-#progress {
-    height: 100%;
-    background: #ff4757;
-    width: 100%;
-}
-.promo-img {
-    width: 100%;
-    height: 200px; /* Hauteur fixe pour une uniformité */
-    object-fit: cover; /* Recadre l'image sans la déformer */
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
-
-.promo-box h3 {
-    margin: 10px 0;
-    color: #333;
-}
-
-.promo-box button {
-    background: #ff4757;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: 0.3s;
-}
-
-.promo-box button:hover {
-    background: #ff6b81;
-}
-.contact-info {
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 8px;
-    margin: 15px 0;
-    font-size: 0.9em;
-    text-align: left;
-}
-
-.contact-info p {
-    margin: 5px 0;
-    color: #444;
-}
-
-.contact-info a {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.copyright {
-    font-size: 0.75em;
-    color: #888;
-    margin-top: 10px;
-}
-
-/* Ajustement du bouton pour qu'il soit bien visible */
-.promo-box button {
-    width: 100%;
-    margin-top: 15px;
-    background: #2c3e50;
-}
-.promo-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7); display: flex;
-    justify-content: center; align-items: center; z-index: 9999;
-}
-.promo-box {
-    background: white; padding: 20px; border-radius: 15px;
-    width: 90%; max-width: 400px; text-align: center; position: relative;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-.promo-img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; }
-.timer-bar { width: 100%; height: 4px; background: #eee; margin-bottom: 15px; }
-#progress { height: 100%; background: #2c3e50; width: 100%; }
-.contact-info { background: #f4f4f4; padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 0.9em; text-align: left; }
-.copyright { font-size: 0.7em; color: #999; margin-bottom: 10px; }
-button { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-
     </style>
 </head>
 <body>
 
+<div class="hud-frame"></div>
+<div class="hud-text">SYSTEM::ONLINE | GPS::ACTIVE | STATUS::READY</div>
+<div class="hud-text-right">VO3::RENDER | FRAME::60FPS | SYNC::OK</div>
+
 <div id="promo-overlay" class="promo-overlay">
     <div class="promo-box">
         <div class="timer-bar"><div id="progress"></div></div>
-        
+
         <img src="https://emileag.art.blog/wp-content/uploads/2024/09/img_20231220_2038471746333048569282032.jpg?w=1200&h=" alt="AmiBa Groupe" class="promo-img">
-        
+
         <h3> 🆘 Publicité 🆘 </h3>
         <p>Cette application a été créée par <strong>AGBABLI</strong> (Électrotechnicien & Informaticien) en collaboration avec son équipe <strong>AmiBa Groupe</strong>.</p>
-        
+
         <div class="contact-info">
             <p><strong>Email :</strong> emileagbabli7@gmail.com</p>
             <p><strong>Tel :</strong> +228 93896972</p>
             <a href="https://emileag228.github.io/AmiBa.Web/" target="_blank">🌐 Visiter notre site web</a>
         </div>
-        
+
         <p class="copyright">© Tous droits réservés à AmiBa Groupe</p>
-        
-         <!-- <button onclick="closePromo()">Fermer</button> -->
     </div>
 </div>
 
-
 <div class="scanner-line"></div>
+<canvas id="particles"></canvas>
 <canvas id="network"></canvas>
 
 <div class="glass-card">
     <div class="ui-corner top-left"></div>
     <div class="ui-corner bottom-right"></div>
-    
+    <div class="ui-corner top-right"></div>
+    <div class="ui-corner bottom-left"></div>
+
     <div class="logo-wrapper">
-        <!-- Remplacer af.jpg par ton image réelle -->
+        <div class="logo-pulse"></div>
         <img src="af.jpg" alt="Logo" class="logo">
     </div>
 
@@ -345,114 +652,51 @@ button { background: #2c3e50; color: white; border: none; padding: 10px 20px; bo
 </div>
 
 <script>
+    // === CANVAS NETWORK VO3 ===
     const canvas = document.getElementById('network');
     const ctx = canvas.getContext('2d');
     let width, height, nodes = [];
-    const mouse = { x: null, y: null, radius: 150 };
+    const mouse = { x: null, y: null, radius: 180 };
 
-    function init() {
+    function initNetwork() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         nodes = [];
-        const count = Math.floor((width * height) / 15000); // Densité adaptative
-        
+        const count = Math.floor((width * height) / 12000);
+
         for(let i = 0; i < count; i++) {
             nodes.push({
                 x: Math.random() * width,
                 y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 2 + 1
+                vx: (Math.random() - 0.5) * 0.6,
+                vy: (Math.random() - 0.5) * 0.6,
+                size: Math.random() * 2.5 + 1,
+                hue: Math.random() * 60 + 180
             });
         }
     }
 
-    function draw() {
+    function drawNetwork() {
         ctx.clearRect(0, 0, width, height);
-        
+
         for(let i = 0; i < nodes.length; i++) {
             let n = nodes[i];
-            
-            // Mouvement
+
             n.x += n.vx;
             n.y += n.vy;
 
-            // Rebond
             if(n.x < 0 || n.x > width) n.vx *= -1;
             if(n.y < 0 || n.y > height) n.vy *= -1;
 
-            // Interaction Souris (Repousser les points)
             let dxMouse = n.x - mouse.x;
             let dyMouse = n.y - mouse.y;
             let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
-            
+
             if(distMouse < mouse.radius) {
                 const force = (mouse.radius - distMouse) / mouse.radius;
-                n.x += dxMouse * force * 0.05;
-                n.y += dyMouse * force * 0.05;
+                n.x += dxMouse * force * 0.08;
+                n.y += dyMouse * force * 0.08;
             }
 
-            // Dessin Point
-            ctx.fillStyle = 'rgba(0, 255, 240, 0.8)';
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, n.size, 0, Math.PI*2);
-            ctx.fill();
-
-            // Dessin Lignes
-            for(let j = i + 1; j < nodes.length; j++) {
-                let n2 = nodes[j];
-                let dx = n.x - n2.x;
-                let dy = n.y - n2.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-
-                if(dist < 150) {
-                    ctx.strokeStyle = `rgba(0, 255, 240, ${1 - dist/150})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(n.x, n.y);
-                    ctx.lineTo(n2.x, n2.y);
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(draw);
-    }
-
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.x;
-        mouse.y = e.y;
-    });
-
-    window.addEventListener('resize', init);
-
-    init();
-    draw();
-//publiciataire
-// Temps en millisecondes (5 secondes ici)
-const duration = 5000;
-const progressBar = document.getElementById('progress');
-const promoOverlay = document.getElementById('promo-overlay');
-
-function closePromo() {
-    promoOverlay.style.display = 'none';
-}
-
-// Animation de la barre de progression
-let startTime = null;
-function animate(currentTime) {
-    if (!startTime) startTime = currentTime;
-    let progress = (currentTime - startTime) / duration;
-    progressBar.style.width = (100 - (progress * 100)) + '%';
-    
-    if (progress < 1) {
-        requestAnimationFrame(animate);
-    } else {
-        closePromo();
-    }
-}
-
-requestAnimationFrame(animate);
-</script>
-
-</body>
-</html>
+            ctx.fillStyle = `hsla(${n.hue}, 100%, 70%, 0.8)`;
+            ctx
