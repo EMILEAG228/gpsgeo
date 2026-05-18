@@ -699,4 +699,138 @@
             }
 
             ctx.fillStyle = `hsla(${n.hue}, 100%, 70%, 0.8)`;
-            ctx
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = `hsla(${n.hue}, 100%, 70%, 0.5)`;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.size, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            for(let j = i + 1; j < nodes.length; j++) {
+                let n2 = nodes[j];
+                let dx = n.x - n2.x;
+                let dy = n.y - n2.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(dist < 160) {
+                    const gradient = ctx.createLinearGradient(n.x, n.y, n2.x, n2.y);
+                    gradient.addColorStop(0, `hsla(${n.hue}, 100%, 60%, ${1 - dist/160})`);
+                    gradient.addColorStop(1, `hsla(${n2.hue}, 100%, 60%, ${1 - dist/160})`);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 0.6;
+                    ctx.beginPath();
+                    ctx.moveTo(n.x, n.y);
+                    ctx.lineTo(n2.x, n2.y);
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(drawNetwork);
+    }
+
+    // === PARTICLES CANVAS VO3 ===
+    const pCanvas = document.getElementById('particles');
+    const pCtx = pCanvas.getContext('2d');
+    let particles = [];
+
+    function initParticles() {
+        pCanvas.width = window.innerWidth;
+        pCanvas.height = window.innerHeight;
+        particles = [];
+        for(let i = 0; i < 100; i++) {
+            particles.push({
+                x: Math.random() * pCanvas.width,
+                y: Math.random() * pCanvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2 + 0.5,
+                life: Math.random() * 100,
+                hue: Math.random() * 60 + 160
+            });
+        }
+    }
+
+    function drawParticles() {
+        pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life++;
+
+            if(p.x < 0 || p.x > pCanvas.width) p.vx *= -1;
+            if(p.y < 0 || p.y > pCanvas.height) p.vy *= -1;
+            if(p.life > 200) {
+                p.x = Math.random() * pCanvas.width;
+                p.y = Math.random() * pCanvas.height;
+                p.life = 0;
+            }
+
+            pCtx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${1 - p.life/200})`;
+            pCtx.beginPath();
+            pCtx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            pCtx.fill();
+        });
+        requestAnimationFrame(drawParticles);
+    }
+
+    // === EVENTS ===
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.x;
+        mouse.y = e.y;
+    });
+
+    window.addEventListener('resize', () => {
+        initNetwork();
+        initParticles();
+    });
+
+    initNetwork();
+    drawNetwork();
+    initParticles();
+    drawParticles();
+
+    // === PROMO LOGIC - INCHANGÉ ===
+    const duration = 5000;
+    const progressBar = document.getElementById('progress');
+    const promoOverlay = document.getElementById('promo-overlay');
+
+    function closePromo() {
+        promoOverlay.style.opacity = '0';
+        promoOverlay.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            promoOverlay.style.display = 'none';
+        }, 600);
+    }
+
+    let startTime = null;
+    function animate(currentTime) {
+        if (!startTime) startTime = currentTime;
+        let progress = (currentTime - startTime) / duration;
+        progressBar.style.width = (100 - (progress * 100)) + '%';
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            closePromo();
+        }
+    }
+
+    requestAnimationFrame(animate);
+
+    // === VO3 EXTRA EFFECTS ===
+    document.addEventListener('mousemove', (e) => {
+        const card = document.querySelector('.glass-card');
+        const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+        const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+        card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+    });
+
+    // Reset card on mouse leave
+    document.addEventListener('mouseleave', () => {
+        const card = document.querySelector('.glass-card');
+        card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    });
+</script>
+
+</body>
+</html>
