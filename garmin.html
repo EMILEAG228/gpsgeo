@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚡ GPS ↔ UTM Pro VO3 - CEET</title>
+  <title>⚡ GPS ↔ UTM Pro - CEET</title>
   <link rel="icon" href="https://services.ceet.tg/assets/img/ceet_logo1.png" type="image/png" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 
   <!-- Leaflet & Proj4 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -15,42 +15,18 @@
   <style>
     :root {
       --primary: #00f2ff;
-      --primary-glow: #00f2ff55;
       --secondary: #7000ff;
-      --secondary-glow: #7000ff55;
-      --accent: #ff0080;
-      --accent-glow: #ff008055;
-      --success: #00ff88;
-      --warning: #ffaa00;
-      --danger: #ff3366;
-      --bg: #020308;
-      --bg-deep: #000103;
-      --card-bg: rgba(12, 18, 35, 0.65);
-      --card-bg-2: rgba(8, 12, 24, 0.75);
-      --glass-border: rgba(0, 242, 255, 0.15);
-      --glass-border-2: rgba(112, 0, 255, 0.15);
-      --text: #e8f4ff;
-      --text-dim: #8a9bb0;
-      --hud: #00ffcc;
+      --bg: #050810;
+      --card-bg: rgba(15, 20, 35, 0.8);
+      --glass-border: rgba(0, 242, 255, 0.2);
+      --text: #e2e8f0;
     }
 
-    * { 
-      box-sizing: border-box; 
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      scrollbar-width: thin;
-      scrollbar-color: var(--primary) var(--bg);
-    }
+    * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-    *::-webkit-scrollbar { width: 8px; height: 8px; }
-    *::-webkit-scrollbar-track { background: var(--bg); }
-    *::-webkit-scrollbar-thumb { 
-      background: linear-gradient(180deg, var(--primary), var(--secondary));
-      border-radius: 10px;
-    }
-
-    html, body {
-      font-family: 'Space Grotesk', 'Rajdhani', sans-serif;
-      background: var(--bg-deep);
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
       color: var(--text);
       margin: 0;
       min-height: 100vh;
@@ -60,100 +36,19 @@
       overflow-x: hidden;
     }
 
-    /* === FOND TRIPLE LAYER === */
-    #bgCanvas, #auroraCanvas, #starsCanvas, #gridCanvas {
+    /* Canvas Fond Interactif */
+    #bgCanvas {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: -1;
     }
-    #gridCanvas { z-index: -4; opacity: 0.15; }
-    #starsCanvas { z-index: -3; opacity: 0.6; }
-    #auroraCanvas { z-index: -2; filter: blur(60px); opacity: 0.3; }
-    #bgCanvas { z-index: -1; filter: drop-shadow(0 0 10px var(--primary-glow)); }
 
-    /* === GRAIN + SCANLINES VO3 === */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: 
-        repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 4px),
-        repeating-linear-gradient(90deg, rgba(0,242,255,0.02) 0px, transparent 1px, transparent 3px);
-      opacity: 0.15;
-      z-index: 0;
-      pointer-events: none;
-      animation: crtFlicker 0.2s infinite alternate;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: -50%;
-      width: 200%; height: 200%;
-      background:
-        radial-gradient(circle at 15% 25%, var(--primary-glow) 0%, transparent 20%),
-        radial-gradient(circle at 85% 75%, var(--secondary-glow) 0%, transparent 20%),
-        radial-gradient(circle at 50% 50%, var(--accent-glow) 0%, transparent 25%);
-      z-index: -4;
-      animation: bgMorph 25s ease-in-out infinite alternate;
-      filter: blur(100px);
-      opacity: 0.4;
-    }
-
-    /* === HUD FRAME === */
-    .hud-frame {
-      position: fixed;
-      inset: 15px;
-      z-index: 50;
-      pointer-events: none;
-      border: 1px solid rgba(0,242,255,0.08);
-    }
-
-    .hud-corner {
-      position: absolute;
-      width: 50px; height: 50px;
-      border: 2px solid var(--hud);
-      animation: hudPulse 4s ease-in-out infinite;
-    }
-
-    .hud-corner.tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
-    .hud-corner.tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
-    .hud-corner.bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
-    .hud-corner.br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
-
-    .hud-line {
-      position: absolute;
-      background: linear-gradient(90deg, transparent, var(--hud), transparent);
-      height: 1px;
-      animation: hudScan 8s linear infinite;
-    }
-
-    .hud-line.top { top: 0; left: 60px; right: 60px; }
-    .hud-line.bottom { bottom: 0; left: 60px; right: 60px; animation-delay: 4s; }
-
-    .hud-text {
-      position: fixed;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.65rem;
-      letter-spacing: 3px;
-      color: var(--hud);
-      opacity: 0.6;
-      z-index: 51;
-      text-transform: uppercase;
-    }
-
-    .hud-text.tl { top: 20px; left: 80px; }
-    .hud-text.tr { top: 20px; right: 80px; text-align: right; }
-    .hud-text.bl { bottom: 20px; left: 80px; }
-    .hud-text.br { bottom: 20px; right: 80px; text-align: right; }
-
-    /* === HEADER === */
     header {
       width: 100%;
-      padding: 18px 30px;
-      background: linear-gradient(180deg, rgba(5,8,16,0.95) 0%, rgba(5,8,16,0.7) 100%);
-      backdrop-filter: blur(20px) saturate(180%);
+      padding: 20px;
+      background: rgba(5, 8, 16, 0.8);
+      backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--glass-border);
       display: flex;
       justify-content: space-between;
@@ -161,473 +56,183 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
 
     .logo-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 900;
-      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
-      background-size: 200% auto;
+      font-size: 1.2rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-transform: uppercase;
-      letter-spacing: 3px;
-      animation: gradientShift 5s linear infinite;
-      filter: drop-shadow(0 0 20px var(--primary-glow));
+      letter-spacing: 2px;
     }
 
-    #status {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.75rem;
-      color: var(--success);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #status::before {
-      content: "";
-      width: 8px; height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: statusBlink 2s ease-in-out infinite;
-      box-shadow: 0 0 10px var(--success);
-    }
-
-    #status.error { color: var(--danger); }
-    #status.error::before { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
-    #status.warning { color: var(--warning); }
-    #status.warning::before { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
-
-    /* === CONTAINER === */
     .container {
-      max-width: 700px;
+      max-width: 600px;
       width: 95%;
-      margin: 50px 0;
-      perspective: 1500px;
-      z-index: 10;
+      margin: 40px 0;
+      perspective: 1000px;
     }
 
     .glass-card {
-      background: 
-        linear-gradient(135deg, rgba(0,242,255,0.03) 0%, rgba(112,0,255,0.03) 100%),
-        var(--card-bg);
-      backdrop-filter: blur(25px) saturate(200%);
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);
       border: 1px solid var(--glass-border);
-      border-radius: 25px;
-      padding: 40px;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.7),
-        0 0 80px var(--primary-glow),
-        inset 0 0 40px rgba(0, 242, 255, 0.02);
-      animation: cardEntry 1.2s cubic-bezier(0.16, 1, 0.3, 1), cardFloat 8s ease-in-out infinite 1.2s;
-      position: relative;
-      overflow: hidden;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 242, 255, 0.1);
+      animation: slideUp 0.8s ease-out;
     }
 
-    .glass-card::before {
-      content: "";
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: conic-gradient(from 0deg, transparent, var(--primary-glow), transparent, var(--secondary-glow), transparent);
-      animation: cardRotate 10s linear infinite;
-      opacity: 0.3;
-    }
-
-    .glass-card > * { position: relative; z-index: 1; }
-
-    /* === TITRES === */
     h1, h2 {
       font-family: 'Orbitron', sans-serif;
       color: var(--primary);
       text-transform: uppercase;
-      font-size: 1.2rem;
-      margin-bottom: 25px;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      letter-spacing: 2px;
-      position: relative;
+      gap: 10px;
     }
 
-    h1::after, h2::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, var(--primary), transparent);
-      margin-left: 10px;
-    }
-
-    /* === INPUTS === */
     .input-group {
-      margin-bottom: 22px;
+      margin-bottom: 20px;
       text-align: left;
-      position: relative;
-    }
-
-    .input-group label {
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      display: block;
     }
 
     input {
       width: 100%;
-      padding: 14px 18px;
-      background: rgba(0, 0, 0, 0.4);
+      padding: 12px 15px;
+      background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--glass-border);
-      border-radius: 12px;
+      border-radius: 8px;
       color: white;
       font-size: 1rem;
-      font-family: 'Space Grotesk', sans-serif;
       margin-top: 5px;
-      position: relative;
     }
 
     input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 
-        0 0 20px var(--primary-glow),
-        inset 0 0 20px rgba(0, 242, 255, 0.05);
-      background: rgba(0, 242, 255, 0.03);
-      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+      background: rgba(0, 242, 255, 0.05);
     }
 
-    .grid-inputs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    /* === BOUTONS === */
     .btn-main {
       width: 100%;
-      padding: 16px;
+      padding: 14px;
       border: none;
-      border-radius: 14px;
+      border-radius: 10px;
       background: linear-gradient(135deg, var(--secondary), var(--primary));
       color: white;
       font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
+      font-weight: bold;
       cursor: pointer;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      box-shadow: 
-        0 6px 25px rgba(112, 0, 255, 0.5),
-        inset 0 0 20px rgba(255,255,255,0.1);
-      margin-bottom: 12px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-main::before {
-      content: "";
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-      background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(112, 0, 255, 0.4);
+      margin-bottom: 10px;
     }
 
     .btn-main:hover {
-      transform: translateY(-3px);
-      box-shadow: 
-        0 10px 35px rgba(0, 242, 255, 0.6),
-        inset 0 0 30px rgba(255,255,255,0.2);
-      filter: brightness(1.15);
-    }
-
-    .btn-main:hover::before {
-      width: 400px; height: 400px;
-    }
-
-    .btn-main:active {
-      transform: translateY(-1px);
-    }
-
-    .btn-main:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 242, 255, 0.5);
+      filter: brightness(1.1);
     }
 
     .btn-secondary {
       background: transparent;
       border: 1px solid var(--primary);
       color: var(--primary);
-      padding: 10px 18px;
-      border-radius: 10px;
+      padding: 8px 15px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 0.9rem;
       text-decoration: none;
       display: inline-block;
-      margin-top: 12px;
-      font-family: 'Orbitron', sans-serif;
-      letter-spacing: 1px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-secondary::before {
-      content: "";
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: var(--primary);
-      transition: 0.4s;
-      z-index: -1;
+      margin-top: 10px;
     }
 
     .btn-secondary:hover {
+      background: var(--primary);
       color: var(--bg);
-      box-shadow: 0 0 20px var(--primary-glow);
     }
 
-    .btn-secondary:hover::before {
-      left: 0;
-    }
-
-    /* === RESULTS === */
     #result, #utmResult {
-      margin-top: 25px;
-      padding: 18px;
-      background: linear-gradient(135deg, rgba(0, 242, 255, 0.05) 0%, rgba(112, 0, 255, 0.05) 100%);
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 242, 255, 0.05);
       border-left: 3px solid var(--primary);
-      border-radius: 8px;
+      border-radius: 4px;
       font-size: 0.95rem;
-      line-height: 1.8;
+      line-height: 1.6;
       display: none;
-      animation: resultSlide 0.5s ease-out;
-      box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.03);
     }
 
-    #result strong, #utmResult strong {
-      color: var(--primary);
-      font-family: 'Orbitron', sans-serif;
-      letter-spacing: 1px;
-    }
-
-    /* === MAP === */
     #map {
       width: 100%;
-      height: 400px;
-      margin-top: 30px;
-      border-radius: 18px;
+      height: 350px;
+      margin-top: 25px;
+      border-radius: 15px;
       border: 1px solid var(--glass-border);
-      box-shadow: 
-        0 10px 40px rgba(0,0,0,0.5),
-        inset 0 0 40px rgba(0, 242, 255, 0.02);
-      filter: hue-rotate(190deg) saturate(0.8) brightness(0.7) contrast(1.2);
+      filter: hue-rotate(180deg) invert(100%) contrast(90%); /* Trick pour mode sombre simple */
     }
 
-    /* === FOOTER === */
     footer {
       margin-top: auto;
-      padding: 50px 20px;
+      padding: 40px 20px;
       text-align: center;
       width: 100%;
-      position: relative;
-      z-index: 10;
     }
 
     .logo-spin {
-      width: 70px;
-      height: 70px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       border: 2px solid var(--primary);
-      padding: 8px;
-      animation: spinSlow 10s linear infinite, logoGlow 3s ease-in-out infinite alternate;
-      margin-bottom: 18px;
-      background: var(--card-bg);
+      padding: 5px;
+      animation: spin 8s linear infinite;
+      margin-bottom: 15px;
     }
 
-    /* === TOAST NOTIFICATION === */
-    .toast {
-      position: fixed;
-      top: 100px;
-      right: 30px;
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-      border-left: 4px solid var(--primary);
-      padding: 16px 24px;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-      z-index: 1000;
-      animation: toastSlide 0.4s ease-out;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.9rem;
-    }
-
-    .toast.success { border-left-color: var(--success); }
-    .toast.error { border-left-color: var(--danger); }
-    .toast.warning { border-left-color: var(--warning); }
-
-    /* === ANIMATIONS === */
-    @keyframes crtFlicker {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.12; }
-    }
-
-    @keyframes bgMorph {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      100% { transform: translate(5%, 5%) rotate(3deg) scale(1.1); }
-    }
-
-    @keyframes hudPulse {
-      0%, 100% { opacity: 0.3; box-shadow: 0 0 5px var(--hud); }
-      50% { opacity: 1; box-shadow: 0 0 20px var(--hud); }
-    }
-
-    @keyframes hudScan {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-
-    @keyframes statusBlink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    @keyframes gradientShift {
-      0% { background-position: 0% center; }
-      100% { background-position: 200% center; }
-    }
-
-    @keyframes cardEntry {
-      from { opacity: 0; transform: translateY(50px) scale(0.9) rotateX(10deg); }
-      to { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
-    }
-
-    @keyframes cardFloat {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
-    }
-
-    @keyframes cardRotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes spinSlow {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes logoGlow {
-      0% { box-shadow: 0 0 20px var(--primary-glow); }
-      100% { box-shadow: 0 0 40px var(--primary), 0 0 60px var(--primary-glow); }
-    }
-
-    @keyframes resultSlide {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes toastSlide {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* === RESPONSIVE === */
-    @media (max-width: 768px) {
-      .grid-inputs { grid-template-columns: 1fr; }
-      .glass-card { padding: 30px 25px; }
-      h1, h2 { font-size: 1rem; }
-      .hud-frame { inset: 8px; }
-      .hud-text { font-size: 0.55rem; }
-      #map { height: 300px; }
-      .toast { right: 15px; left: 15px; }
-    }
-
-    /* === EXTRA EFFECTS === */
-    .ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
-      pointer-events: none;
-      animation: rippleOut 0.8s ease-out forwards;
-    }
-
-    @keyframes rippleOut {
-      from { width: 0; height: 0; opacity: 1; }
-      to { width: 300px; height: 300px; opacity: 0; }
-    }
-
-    .pulse-ring {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      border: 2px solid var(--primary);
-      border-radius: 50%;
-      animation: pulseRing 2s ease-out infinite;
-      pointer-events: none;
-    }
-
-    @keyframes pulseRing {
-      0% { width: 0; height: 0; opacity: 1; }
-      100% { width: 200px; height: 200px; opacity: 0; }
-    }
-
-    /* === LOADING SPINNER === */
-    .spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-left: 8px;
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .grid-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    @media (max-width: 600px) {
+      .grid-inputs { grid-template-columns: 1fr; }
+    }
+  
   </style>
 </head>
 <body>
 
-  <!-- HUD FRAME -->
-  <div class="hud-frame">
-    <div class="hud-corner tl"></div>
-    <div class="hud-corner tr"></div>
-    <div class="hud-corner bl"></div>
-    <div class="hud-corner br"></div>
-    <div class="hud-line top"></div>
-    <div class="hud-line bottom"></div>
-  </div>
-
-  <!-- HUD TEXT -->
-  <div class="hud-text tl">SYS::GPS::ONLINE</div>
-  <div class="hud-text tr" id="clock">00:00:00</div>
-  <div class="hud-text bl">ZONE::31N::ACTIVE</div>
-  <div class="hud-text br">VO3::RENDER::60FPS</div>
-
-  <!-- QUAD CANVAS BACKGROUND -->
-  <canvas id="gridCanvas"></canvas>
-  <canvas id="starsCanvas"></canvas>
-  <canvas id="auroraCanvas"></canvas>
   <canvas id="bgCanvas"></canvas>
 
   <header>
-    <div class="logo-text">⚡ GPS ↔ UTM PRO VO3</div>
-    <div id="status">SYSTEM READY</div>
+    <div class="logo-text">⚡ GPS ↔ UTM PRO</div>
+    <div id="status" style="font-size: 0.8rem; color: var(--primary);">SYSTEM READY</div>
   </header>
 
   <div class="container">
     <div class="glass-card">
-      <h1>🌍 Géolocalisation Temps Réel By AGBABLI</h1>
+      <h1>🌍 Géolocalisation Temps Réel By AGBABLI </h1>
       <button class="btn-main" onclick="getLocation()">Scanner ma Position</button>
       <div id="result"></div>
       
-      <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 35px 0; box-shadow: 0 0 10px var(--primary-glow);">
+      <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 30px 0;">
 
       <h2>🧭 Conversion UTM (Zone 31N)</h2>
       <div class="grid-inputs">
@@ -639,13 +244,14 @@
           <label>Northing (Y)</label>
           <input type="number" id="northing" placeholder="Ex: 686252">
         </div>
+      </div>
       <button class="btn-main" onclick="convertUTM()">Convertir en Lat/Lon</button>
       
       <div id="utmResult"></div>
 
       <div id="map"></div>
 
-      <div style="margin-top: 25px; display: flex; justify-content: space-between; gap: 15px;">
+      <div style="margin-top: 20px; display: flex; justify-content: space-between;">
         <a href="index.html" class="btn-secondary">🏠 Menu</a>
         <a href="converter.html" class="btn-secondary">⚙️ Avancé</a>
       </div>
@@ -654,9 +260,9 @@
 
   <footer>
     <img src="af.jpg" class="logo-spin" alt="Logo">
-    <p style="font-size: 0.85rem; opacity: 0.7; letter-spacing: 2px; font-family: 'Orbitron', sans-serif;">
+    <p style="font-size: 0.8rem; opacity: 0.7; letter-spacing: 1px;">
       &copy; 2025 FIOAKEY ⚡ AGBABLI <br>
-      <span style="font-size: 0.7rem; opacity: 0.5;">VO3 ULTRA EDITION</span>
+    
     </p>
   </footer>
 
@@ -664,54 +270,11 @@
     const utm31n = "+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs";
     let map, marker;
 
-    // === TOAST SYSTEM ===
-    function showToast(message, type = 'info') {
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(400px)';
-        setTimeout(() => toast.remove(), 400);
-      }, 3000);
-    }
-
-    // === HORLOGE HUD ===
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const s = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('clock').textContent = `${h}:${m}:${s}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // === RIPPLE EFFECT ===
-    document.addEventListener('click', (e) => {
-      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
-        const ripple = document.createElement('div');
-        ripple.className = 'ripple';
-        ripple.style.left = e.clientX + 'px';
-        ripple.style.top = e.clientY + 'px';
-        document.body.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 800);
-      }
-    });
-
-    // === INITIALISATION CARTE ===
+    // Initialisation Carte (Mode Sombre via filter CSS)
     function initMap(lat = 6.137, lon = 1.215) {
       if (!map) {
-        map = L.map("map", { 
-          zoomControl: true,
-          attributionControl: false 
-        }).setView([lat, lon], 13);
-        
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19
-        }).addTo(map);
-        
+        map = L.map("map", { zoomControl: false }).setView([lat, lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
         marker = L.marker([lat, lon]).addTo(map);
       } else {
         map.setView([lat, lon], 14);
@@ -720,156 +283,113 @@
     }
     initMap();
 
-    // === GÉOLOCALISATION ===
+    // Géolocalisation
     function getLocation() {
       const btn = event.target;
-      const originalText = btn.textContent;
-      btn.innerHTML = '🔍 Scanning<span class="spinner"></span>';
-      btn.style.pointerEvents = 'none';
-      document.getElementById('status').textContent = 'SCANNING...';
-      document.getElementById('status').className = 'warning';
-      
+      btn.textContent = "Recherche en cours...";
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            btn.textContent = originalText;
-            btn.style.pointerEvents = 'auto';
-            document.getElementById('status').textContent = 'POSITION LOCKED';
-            document.getElementById('status').className = '';
+            btn.textContent = "Scanner ma Position";
             showPosition(pos);
-            showToast('Position acquise avec succès', 'success');
           }, 
-          (error) => {
-            btn.textContent = originalText;
-            btn.style.pointerEvents = 'auto';
-            document.getElementById('status').textContent = 'ERROR';
-            document.getElementById('status').className = 'error';
-            showError(error);
-          }, 
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          showError, 
+          { enableHighAccuracy: true }
         );
-      } else {
-        btn.textContent = originalText;
-        showToast('Géolocalisation non supportée', 'error');
       }
     }
 
     function showPosition(position) {
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
-      const acc = position.coords.accuracy;
-      const alt = position.coords.altitude;
       const [easting, northing] = proj4("WGS84", utm31n, [lon, lat]);
       
       const resDiv = document.getElementById("result");
       resDiv.style.display = "block";
       resDiv.innerHTML = `
-        <strong>📍 LATITUDE:</strong> ${lat.toFixed(6)}°<br>
-        <strong>📍 LONGITUDE:</strong> ${lon.toFixed(6)}°<br>
-        <strong>📏 EASTING:</strong> ${easting.toFixed(2)} m<br>
-        <strong>📏 NORTHING:</strong> ${northing.toFixed(2)} m<br>
-        <strong>🎯 PRÉCISION:</strong> ±${acc.toFixed(0)} m<br>
-        ${alt ? `<strong>⛰️ ALTITUDE:</strong> ${alt.toFixed(0)} m<br>` : ''}
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="color:var(--primary); text-decoration:none; display:inline-block; margin-top:10px;">↗ Ouvrir dans Google Maps</a>
+        <strong>LAT:</strong> ${lat.toFixed(6)} | <strong>LON:</strong> ${lon.toFixed(6)}<br>
+        <strong>EAST:</strong> ${easting.toFixed(2)} m | <strong>NORTH:</strong> ${northing.toFixed(2)} m<br>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="color:var(--primary); text-decoration:none;">↗ Ouvrir dans Google Maps</a>
       `;
       initMap(lat, lon);
     }
 
-    // === CONVERSION UTM ===
+    // Conversion UTM
     function convertUTM() {
       const easting = parseFloat(document.getElementById("easting").value);
       const northing = parseFloat(document.getElementById("northing").value);
       
-      if (isNaN(easting) || isNaN(northing)) {
-        showToast('Veuillez entrer des coordonnées valides', 'warning');
-        return;
-      }
+      if (isNaN(easting) || isNaN(northing)) return;
 
-      const btn = event.target;
-      btn.innerHTML = '⚙️ Converting<span class="spinner"></span>';
-      btn.style.pointerEvents = 'none';
-      document.getElementById('status').textContent = 'CONVERTING...';
-      document.getElementById('status').className = 'warning';
-      
-      setTimeout(() => {
-        const [lon, lat] = proj4(utm31n, "WGS84", [easting, northing]);
-        const resDiv = document.getElementById("utmResult");
-        resDiv.style.display = "block";
-        resDiv.innerHTML = `
-          <strong>📍 Latitude :</strong> ${lat.toFixed(6)}°<br>
-          <strong>📍 Longitude :</strong> ${lon.toFixed(6)}°<br>
-          <strong>🗺️ Zone :</strong> 31N (UTM WGS84)<br>
-          <strong>📏 Easting :</strong> ${easting.toFixed(2)} m<br>
-          <strong>📏 Northing :</strong> ${northing.toFixed(2)} m<br>
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="color:var(--primary); text-decoration:none; display:inline-block; margin-top:10px;">↗ Itinéraire Google Maps</a>
-        `;
-        initMap(lat, lon);
-        document.getElementById('status').textContent = 'CONVERTED';
-        document.getElementById('status').className = '';
-        btn.textContent = 'Convertir en Lat/Lon';
-        btn.style.pointerEvents = 'auto';
-        showToast('Conversion réussie', 'success');
-      }, 500);
+      const [lon, lat] = proj4(utm31n, "WGS84", [easting, northing]);
+      const resDiv = document.getElementById("utmResult");
+      resDiv.style.display = "block";
+      resDiv.innerHTML = `
+        <strong>Latitude :</strong> ${lat.toFixed(6)}<br>
+        <strong>Longitude :</strong> ${lon.toFixed(6)}<br>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank" style="color:var(--primary); text-decoration:none;">↗ Itinéraire Google Maps</a>
+      `;
+      initMap(lat, lon);
     }
 
     function showError(error) {
-      let msg = "Erreur GPS : ";
-      switch(error.code) {
-        case error.PERMISSION_DENIED: msg += "Permission refusée"; break;
-        case error.POSITION_UNAVAILABLE: msg += "Position indisponible"; break;
-        case error.TIMEOUT: msg += "Timeout"; break;
-        default: msg += error.message;
+      alert("Erreur GPS : " + error.message);
+    }
+
+    // --- ANIMATION FOND (CONSTELLATION) ---
+    const canvas = document.getElementById("bgCanvas");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+
+    function initCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      particles = [];
+      for (let i = 0; i < 80; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          size: Math.random() * 2
+        });
       }
-      showToast(msg, 'error');
-      document.getElementById('status').textContent = 'ERROR';
-      document.getElementById('status').className = 'error';
     }
 
-    // === CANVAS GRID ===
-    const gridCanvas = document.getElementById("gridCanvas");
-    const gridCtx = gridCanvas.getContext("2d");
-
-    function initGrid() {
-      gridCanvas.width = window.innerWidth;
-      gridCanvas.height = window.innerHeight;
-    }
-
-    function drawGrid() {
-      gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
-      gridCtx.strokeStyle = 'rgba(0, 242, 255, 0.1)';
-      gridCtx.lineWidth = 1;
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(0, 242, 255, 0.5)";
       
-      const spacing = 50;
-      for (let x = 0; x < gridCanvas.width; x += spacing) {
-        gridCtx.beginPath();
-        gridCtx.moveTo(x, 0);
-        gridCtx.lineTo(x, gridCanvas.height);
-        gridCtx.stroke();
-      }
-      for (let y = 0; y < gridCanvas.height; y += spacing) {
-        gridCtx.beginPath();
-        gridCtx.moveTo(0, y);
-        gridCtx.lineTo(gridCanvas.width, y);
-        gridCtx.stroke();
-      }
-      requestAnimationFrame(drawGrid);
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 100) {
+            ctx.strokeStyle = `rgba(0, 242, 255, ${1 - dist / 100})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      });
+      requestAnimationFrame(animate);
     }
 
-    // === CANVAS STARS ===
-    const starsCanvas = document.getElementById("starsCanvas");
-    const starsCtx = starsCanvas.getContext("2d");
-    let stars = [];
+    window.addEventListener("resize", initCanvas);
+    initCanvas();
+    animate();
 
-    function initStars() {
-      starsCanvas.width = window.innerWidth;
-      starsCanvas.height = window.innerHeight;
-      stars = [];
-      for (let i = 0; i < 200; i++) {
-        stars.push({
-          x: Math.random() * starsCanvas.width,
-          y: Math.random() * starsCanvas.height,
-          size: Math.random() * 2,
-          opacity: Math.random(),
-          speed: Math.random() * 0.3,
-          twinkle: Math.random() * Math.PI * 2
-        </script>
+  </script>
+</body>
+</html>
