@@ -11,38 +11,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
-<script>
-// Bloque tout de suite
-document.write('<style>body{display:none !important}</style>');
 
-(function() {
-  const motsDePasseValides = ["emilecpt@2003?", "#emilecpt@2003?"];
-  let tentatives = 0;
-  
-  while (tentatives < 3) {
-    let mdp = prompt("Mot de passe requis :");
-    
-    if (mdp === null) {
-      document.write('<h1 style="text-align:center;margin-top:20%">Accès refusé</h1>');
-      window.stop(); // Stop le chargement
-      return;
-    }
-    
-    if (motsDePasseValides.includes(mdp.trim())) {
-      // Correct : on réaffiche la page
-      document.write('<style>body{display:block !important}</style>');
-      return;
-    }
-    
-    alert("Mot de passe incorrect");
-    tentatives++;
-  }
-  
-  // Trop de tentatives
-  document.write('<h1 style="text-align:center;margin-top:20%">Trop de tentatives. Accès bloqué.</h1>');
-  window.stop();
-})();
-</script>
   <style>
     :root {
       --primary: #00f2ff;
