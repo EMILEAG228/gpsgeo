@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+(<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -267,35 +267,7 @@
   </footer>
 
   <script>
-    (function() {
-  
-  
-  function demanderMotDePasse() {
-    let mdp = prompt("Entrez le mot de passe pour accéder à l'application :");
-    
-    // Si l'utilisateur clique sur Annuler
-    if (mdp === null) {
-      document.body.innerHTML = "<h1 style='text-align:center;margin-top:50px'>Accès refusé</h1>";
-      return;
-    }
-    
-    if (motsDePasseValides.includes(mdp.trim())) {
-      // Mot de passe correct, on laisse l'app se charger
-      return;
-    } else {
-      alert("Mot de passe incorrect !");
-      demanderMotDePasse(); // On redemande
-    }
-  }
-  
-  // On cache la page tant que le mdp n'est pas validé
-  document.documentElement.style.display = 'none';
-  
-  window.addEventListener('DOMContentLoaded', function() {
-    demanderMotDePasse();
-    document.documentElement.style.display = ''; // On réaffiche si ok
-  });
-})();
+
     const utm31n = "+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs";
     let map, marker;
 
